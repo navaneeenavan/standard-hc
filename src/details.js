@@ -15,15 +15,23 @@ function Details() {
         if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
         setCheques(data);
-        setIsLoading(false);
+
       } catch (err) {
         setError(err.message);
-        setIsLoading(false);
+
       }
     };
 
+
+
+    // here i want chatGPT to insert the code that reloads and fetch data from db every 2 seconds
     fetchCheques();
+    const interval = setInterval(fetchCheques, 2000);
+
+    // Clean up function to clear the interval on component unmount
+    return () => clearInterval(interval);
   }, []);
+
 
   const checkValidity = () => {
     console.log("Checking cheque validity...");
@@ -33,6 +41,38 @@ function Details() {
       setValidating(false); // Reset state after check is complete (dummy example)
     }, 2000);
   };
+
+
+
+  const checkit = async ({cheque}) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Send a POST request to the backend endpoint
+      const response = await fetch('http://127.0.0.1:5000/process_image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({cheque})
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process the image');
+      }
+
+      // Image processing successful
+      setIsLoading(false);
+      alert('Image processing successful');
+    } catch (error) {
+      // Error occurred during image processing
+      setIsLoading(false);
+      setError(error.message || 'An error occurred');
+      console.error('Error:', error);
+    }
+  };
+
 
  
 
@@ -51,7 +91,7 @@ function Details() {
           Reason={cheque.reason}
           Status={cheque.status}
           validating={validating} // Pass validating state to Details component
-          checkValidity={checkValidity} // Pass checkValidity function to Details component
+          checkValidity={checkit} // Pass checkValidity function to Details component
         />
       )
       
